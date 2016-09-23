@@ -78,6 +78,7 @@ class Processor
      * @var \Magento\Backend\Model\Session\Quote
      */
     protected $currentSession;
+    protected $toOrderItem;
 
     /**
      * @param \Magento\Framework\Registry $coreRegistry
@@ -106,7 +107,8 @@ class Processor
         \Magento\Shipping\Controller\Adminhtml\Order\ShipmentLoaderFactory $shipmentLoaderFactory,
         \Magento\Sales\Controller\Adminhtml\Order\CreditmemoLoaderFactory $creditmemoLoaderFactory,
         \Magento\Store\Model\StoreManagerInterface $storeManager,
-        \Magento\Sales\Api\CreditmemoManagementInterface $creditmemoManagement
+        \Magento\Sales\Api\CreditmemoManagementInterface $creditmemoManagement,
+        \Magento\Quote\Model\Quote\Item\ToOrderItem $toOrderItem
     ) {
         $this->coreRegistry = $coreRegistry;
         $this->rendererCompositeFactory = $rendererCompositeFactory;
@@ -120,6 +122,7 @@ class Processor
         $this->creditmemoLoaderFactory = $creditmemoLoaderFactory;
         $this->storeManager = $storeManager;
         $this->creditmemoManagement = $creditmemoManagement;
+        $this->toOrderItem = $toOrderItem;
     }
 
     /**
@@ -143,13 +146,36 @@ class Processor
             //$i = $t->getId();
 
             $order = $orderCreateModel->createOrder();
-            //$t = $order->getAllItems();
-            $orderItem = $this->getOrderItemForTransaction($order);
-            $this->invoiceOrder($orderItem);
-            $this->shipOrder($orderItem);
-            if ($orderData['refund'] === "yes") {
-                $this->refundOrder($orderItem);
+            $orderItems = $order->getAllItems();
+            $quoteItems = $orderCreateModel->getQuote()->getAllItems();
+            foreach($quoteItems as $quoteItem){
+                $newOrderItem = $this->toOrderItem->convert($quoteItem);
+                $quoteItemId = $newOrderItem->getProductId();
+                foreach ($orderItems as $oItem){
+                    $oItemId = $oItem->getProductId();
+                    if($oItemId!=$quoteItemId){
+                        $order->addItem($newOrderItem);
+                    }
+                }
+
             }
+            //fix totals on order
+            $realTotal = $order->getBaseTotalDue();
+            $order->setBaseSubtotal($realTotal);
+            $order->setSubtotal($realTotal);
+            $order->setBaseSubtotalInclTax($realTotal);
+            $order->setTotalItemCount(count($quoteItems));
+            $order->setBaseSubtotal($realTotal);
+            $order->setBaseSubtotal($realTotal);
+            //$order->save();
+            $orderItem = $this->getOrderItemForTransaction($order);
+            if($orderData['order']['status']=='complete'){
+                $this->invoiceOrder($orderItem);
+                $this->shipOrder($orderItem);
+            }
+            $order->setStatus($orderData['order']['status']);
+            $order->setState($orderData['order']['status']);
+            $order->save();
             $registryItems = [
                 'rule_data',
                 'currently_saved_addresses',
@@ -204,7 +230,7 @@ class Processor
      * @param \Magento\Sales\Model\Order\Item $orderItem
      * @return void
      */
-    protected function invoiceOrder(\Magento\Sales\Model\Order\Item $orderItem)
+    protected function invoiceOrder($orderItem)
     {
         $invoiceData = [$orderItem->getId() => $orderItem->getQtyToInvoice()];
         $invoice = $this->createInvoice($orderItem->getOrderId(), $invoiceData);
@@ -237,7 +263,7 @@ class Processor
      * @param \Magento\Sales\Model\Order\Item $orderItem
      * @return void
      */
-    protected function shipOrder(\Magento\Sales\Model\Order\Item $orderItem)
+    protected function shipOrder($orderItem)
     {
         $shipmentLoader = $this->shipmentLoaderFactory->create();
         $shipmentData = [$orderItem->getId() => $orderItem->getQtyToShip()];

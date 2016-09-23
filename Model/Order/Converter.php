@@ -153,24 +153,25 @@ class Converter
      * @param array $productData
      * @return array
      */
+   /* protected function convertProductData($productData)
+    {   $test = array(2752=>array('qty'=>5),1549=>array('qty'=>10));
+        //$safe_string_to_store = serialize($test);
+        //$productValues = unserialize($productData);
+        //$productId = $this->getProductData($productValues['sku'])->getId();
+        //$productData = ['qty' => $productValues['qty']];
+        //if (isset($productValues['configurable_options'])) {
+         //   $productData['super_attribute'] = $this->getProductAttributes($productValues['configurable_options']);
+        //}
+        //return [$productId => $productData];
+        return $test;
+
+    }*/
+
     protected function convertProductData($productData)
-    {   $test = array(44=>array('qty'=>5),2=>array('qty'=>10));
-        $safe_string_to_store = serialize($test);
-        $productValues = unserialize($productData);
-        $productId = $this->getProductData($productValues['sku'])->getId();
-        $productData = ['qty' => $productValues['qty']];
-        if (isset($productValues['configurable_options'])) {
-            $productData['super_attribute'] = $this->getProductAttributes($productValues['configurable_options']);
-        }
-        return [$productId => $productData];
-
-    }
-
-    /*protected function convertProductData($productData)
     {
         $orderProducts = array();
         $products = explode(';', $productData);
-        foreach($products as $product){
+        foreach($products as $product) {
             preg_match_all("/([^,= ]+)=([^,= ]+)/", $product, $r);
             $productValues = array_combine($r[1], $r[2]);
             $productId = $this->getProductData($productValues['sku'])->getId();
@@ -178,14 +179,10 @@ class Converter
             if (isset($productValues['configurable_options'])) {
                 $productData['super_attribute'] = $this->getProductAttributes($productValues['configurable_options']);
             }
-            array_push($orderProducts,[$productId => $productData]);
+            $orderProducts[$productId] = $productData;
         }
-        $hello = [$productId => $productData];
-
         return $orderProducts;
-
-
-    }*/
+    }
 
     /**
      * @param array $configurableAttributes

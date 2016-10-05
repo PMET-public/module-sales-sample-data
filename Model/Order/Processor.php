@@ -175,6 +175,8 @@ class Processor
             }
             $order->setStatus($orderData['order']['status']);
             $order->setState($orderData['order']['status']);
+            $order->setCreatedAt($orderData['order']['created_at']);
+            $order->setUpdatedAt($orderData['order']['updated_at']);
             $order->save();
             $registryItems = [
                 'rule_data',

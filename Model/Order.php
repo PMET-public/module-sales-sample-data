@@ -42,20 +42,16 @@ class Order
      */
     protected $customerRepository;
 
-    /**
-     * @param SampleDataContext $sampleDataContext
-     * @param Order\Converter $converter
-     * @param Order\Processor $orderProcessor
-     * @param \Magento\Sales\Model\ResourceModel\Order\CollectionFactory $orderCollectionFactory
-     * @param \Magento\Customer\Api\CustomerRepositoryInterface $customerRepository
-     */
+    protected $updateSalesData;
+
     public function __construct(
         SampleDataContext $sampleDataContext,
         Order\Converter $converter,
         Order\Processor $orderProcessor,
         \Magento\Sales\Model\ResourceModel\Order\CollectionFactory $orderCollectionFactory,
         \Magento\Customer\Api\CustomerRepositoryInterface $customerRepository,
-        \Magento\Sales\Model\OrderFactory $orderFactory
+        \Magento\Sales\Model\OrderFactory $orderFactory,
+        \MagentoEse\SalesSampleData\Cron\UpdateSalesData $updateSalesData
     ) {
         $this->fixtureManager = $sampleDataContext->getFixtureManager();
         $this->csvReader = $sampleDataContext->getCsvReader();
@@ -64,6 +60,7 @@ class Order
         $this->orderCollectionFactory = $orderCollectionFactory;
         $this->customerRepository = $customerRepository;
         $this->orderFactory = $orderFactory;
+        $this->updateSalesData = $updateSalesData;
     }
 
     /**
@@ -71,10 +68,6 @@ class Order
      */
     public function install(array $fixtures)
     {
-        //$t = $this->orderFactory->create();
-        //$t->load(1);
-
-
 
         foreach ($fixtures as $file) {
             $fileName = $this->fixtureManager->getFixture($file);
@@ -85,28 +78,16 @@ class Order
             $rows = $this->csvReader->getData($fileName);
             $header = array_shift($rows);
 
-            $isFirst = true;
             foreach ($rows as $row) {
                 $data = [];
                 foreach ($row as $key => $value) {
                     $data[$header[$key]] = $value;
                 }
                 $row = $data;
-                /*if ($isFirst) {
-                    $customer = $this->customerRepository->get($row['customer_email']);
-                    if (!$customer->getId()) {
-                        continue;
-                    }
-
-                    $orderCollection = $this->orderCollectionFactory->create();
-                    $orderCollection->addFilter('customer_id', $customer->getId());
-                    if ($orderCollection->count() > 0) {
-                        break;
-                    }
-                }
-                $isFirst = false;*/
                 $orderData = $this->converter->convertRow($row);
                 $this->orderProcessor->createOrder($orderData);
+                //update order dates
+                $this->updateSalesData->execute();
             }
         }
     }

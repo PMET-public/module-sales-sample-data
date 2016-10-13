@@ -169,20 +169,26 @@ class Processor
             $order->setBaseSubtotal($realTotal);
             //$order->save();
             $orderItem = $this->getOrderItemForTransaction($order);
-            if($orderData['order']['status']=='complete'){
-                $this->invoiceOrder($orderItem);
-                $this->shipOrder($orderItem);
+            // set default date if not provided by data
+            if(! array_key_exists('created_at',$orderData['order'])){
+                $orderData['order']['created_at'] = date('Y-m-d h:i:s');
+
             }
-            $order->setStatus($orderData['order']['status']);
-            $order->setState($orderData['order']['status']);
-            if(array_key_exists('created_at',$orderData['order'])){
-                $order->setCreatedAt($orderData['order']['created_at']);
-            }
-            if(array_key_exists('updated_at',$orderData['order'])){
-                $order->setCreatedAt($orderData['order']['updated_at']);
+            if(! array_key_exists('updated_at',$orderData['order'])){
+                $orderData['order']['updated_at'] = date('Y-m-d h:i:s');
             }
 
+            $order->setStatus($orderData['order']['status']);
+            $order->setState($orderData['order']['status']);
+            $order->setCreatedAt($orderData['order']['created_at']);
+            $order->setCreatedAt($orderData['order']['updated_at']);
             $order->save();
+            //create shipment and invoice if order is complete
+            if($orderData['order']['status']=='complete'){
+                $this->invoiceOrder($orderItem,$orderData['order']['created_at'],$orderData['order']['updated_at']);
+                $this->shipOrder($orderItem,$orderData['order']['created_at'],$orderData['order']['updated_at']);
+            }
+
             $registryItems = [
                 'rule_data',
                 'currently_saved_addresses',
@@ -237,10 +243,13 @@ class Processor
      * @param \Magento\Sales\Model\Order\Item $orderItem
      * @return void
      */
-    protected function invoiceOrder($orderItem)
+    protected function invoiceOrder($orderItem,$createDate,$updateDate)
     {
         $invoiceData = [$orderItem->getId() => $orderItem->getQtyToInvoice()];
         $invoice = $this->createInvoice($orderItem->getOrderId(), $invoiceData);
+        $invoice->setCreatedAt($createDate);
+        $invoice->setUpdatedAt($updateDate);
+        //$invoice->save();
         if ($invoice) {
             $invoice->register();
             $invoice->getOrder()->setIsInProcess(true);
@@ -270,13 +279,16 @@ class Processor
      * @param \Magento\Sales\Model\Order\Item $orderItem
      * @return void
      */
-    protected function shipOrder($orderItem)
+    protected function shipOrder($orderItem,$createDate,$updateDate)
     {
         $shipmentLoader = $this->shipmentLoaderFactory->create();
         $shipmentData = [$orderItem->getId() => $orderItem->getQtyToShip()];
         $shipmentLoader->setOrderId($orderItem->getOrderId());
         $shipmentLoader->setShipment($shipmentData);
         $shipment = $shipmentLoader->load();
+        $shipment->setCreatedAt($createDate);
+        $shipment->setUpdatedAt($updateDate);
+        //$shipment->save();
         if ($shipment) {
             $shipment->register();
             $shipment->getOrder()->setIsInProcess(true);

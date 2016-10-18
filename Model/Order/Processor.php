@@ -199,6 +199,7 @@ class Processor
             $this->currentSession->unsQuoteId();
             $this->currentSession->unsStoreId();
             $this->currentSession->unsCustomerId();
+            return $order->getId();
         }
     }
 
@@ -350,4 +351,5 @@ class Processor
             $this->coreRegistry->unregister($unsetData);
         }
     }
+
 }

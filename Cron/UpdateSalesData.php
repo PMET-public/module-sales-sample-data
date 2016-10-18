@@ -29,8 +29,10 @@ class UpdateSalesData
     /**
      * Method executed when cron runs in server
      */
-    public function execute() {
-        $dayShift = $this->getDateDiff();
+    public function execute($dayShift=0) {
+        if($dayShift!=0) {
+            $dayShift = $this->getDateDiff();
+        }
         $this->updateOrderData($dayShift);
         $this->updateInvoiceData($dayShift);
         $this->updateShipmentData($dayShift);
@@ -43,10 +45,13 @@ class UpdateSalesData
         //sales_order,sales_order_grid
         $connection = $this->resourceConnection->getConnection();
         $tableName = $connection->getTableName('sales_order');
-        $sql = "update " . $tableName . " set created_at =  DATE_ADD(created_at,INTERVAL ".$dateDiff." DAY), updated_at =  DATE_ADD(updated_at,INTERVAL ".$dateDiff." DAY)";
+        $sql = "update " . $tableName . " set created_at =  DATE_ADD(created_at,INTERVAL ".$dateDiff." HOUR), updated_at =  DATE_ADD(updated_at,INTERVAL ".$dateDiff." HOUR)";
         $connection->query($sql);
         $tableName = $connection->getTableName('sales_order_grid');
-        $sql = "update " . $tableName . " set created_at =  DATE_ADD(created_at,INTERVAL ".$dateDiff." DAY), updated_at =  DATE_ADD(updated_at,INTERVAL ".$dateDiff." DAY)";
+        $sql = "update " . $tableName . " set created_at =  DATE_ADD(created_at,INTERVAL ".$dateDiff." HOUR), updated_at =  DATE_ADD(updated_at,INTERVAL ".$dateDiff." HOUR)";
+        $connection->query($sql);
+        $tableName = $connection->getTableName('sales_order_item');
+        $sql = "update " . $tableName . " set created_at =  DATE_ADD(created_at,INTERVAL ".$dateDiff." HOUR), updated_at =  DATE_ADD(updated_at,INTERVAL ".$dateDiff." HOUR)";
         $connection->query($sql);
 
     }
@@ -54,10 +59,10 @@ class UpdateSalesData
     private function updateInvoiceData($dateDiff){
         $connection = $this->resourceConnection->getConnection();
         $tableName = $connection->getTableName('sales_invoice');
-        $sql = "update " . $tableName . " set created_at =  DATE_ADD(created_at,INTERVAL ".$dateDiff." DAY), updated_at =  DATE_ADD(updated_at,INTERVAL ".$dateDiff." DAY)";
+        $sql = "update " . $tableName . " set created_at =  DATE_ADD(created_at,INTERVAL ".$dateDiff." HOUR), updated_at =  DATE_ADD(updated_at,INTERVAL ".$dateDiff." HOUR)";
         $connection->query($sql);
         $tableName = $connection->getTableName('sales_invoice_grid');
-        $sql = "update " . $tableName . " set created_at =  DATE_ADD(created_at,INTERVAL ".$dateDiff." DAY), updated_at =  DATE_ADD(updated_at,INTERVAL ".$dateDiff." DAY), order_created_at =  DATE_ADD(order_created_at,INTERVAL ".$dateDiff." DAY)";
+        $sql = "update " . $tableName . " set created_at =  DATE_ADD(created_at,INTERVAL ".$dateDiff." HOUR), updated_at =  DATE_ADD(updated_at,INTERVAL ".$dateDiff." HOUR), order_created_at =  DATE_ADD(order_created_at,INTERVAL ".$dateDiff." HOUR)";
         $connection->query($sql);
 
     }
@@ -65,15 +70,15 @@ class UpdateSalesData
     private function updateShipmentData($dateDiff){
         $connection = $this->resourceConnection->getConnection();
         $tableName = $connection->getTableName('sales_shipment');
-        $sql = "update " . $tableName . " set created_at =  DATE_ADD(created_at,INTERVAL ".$dateDiff." DAY), updated_at =  DATE_ADD(updated_at,INTERVAL ".$dateDiff." DAY)";
+        $sql = "update " . $tableName . " set created_at =  DATE_ADD(created_at,INTERVAL ".$dateDiff." HOUR), updated_at =  DATE_ADD(updated_at,INTERVAL ".$dateDiff." HOUR)";
         $connection->query($sql);
         $tableName = $connection->getTableName('sales_shipment_grid');
-        $sql = "update " . $tableName . " set created_at =  DATE_ADD(created_at,INTERVAL ".$dateDiff." DAY), updated_at =  DATE_ADD(updated_at,INTERVAL ".$dateDiff." DAY), order_created_at =  DATE_ADD(order_created_at,INTERVAL ".$dateDiff." DAY)";
+        $sql = "update " . $tableName . " set created_at =  DATE_ADD(created_at,INTERVAL ".$dateDiff." HOUR), updated_at =  DATE_ADD(updated_at,INTERVAL ".$dateDiff." HOUR), order_created_at =  DATE_ADD(order_created_at,INTERVAL ".$dateDiff." HOUR)";
         $connection->query($sql);
 
     }
 
-    private function refreshStatistics(){
+    public function refreshStatistics(){
         $this->aggregateSalesReportOrderData->execute();
         $this->aggregateSalesReportBestsellersData->execute();
         $this->aggregateSalesReportInvoicedData->execute();
@@ -83,9 +88,9 @@ class UpdateSalesData
     private function getDateDiff(){
         $connection = $this->resourceConnection->getConnection();
         $tableName = $connection->getTableName('sales_order');
-        $sql = "select datediff(now(),max(created_at)) as days from " . $tableName;
+        $sql = "select DATEDIFF(now(), max(created_at)) * 24 + EXTRACT(HOUR FROM now()) - EXTRACT(HOUR FROM max(created_at)) -1 as hours from " . $tableName;
         $result = $connection->fetchAll($sql);
-        return $result[0]['days'];
+        return $result[0]['hours'];
     }
 
 

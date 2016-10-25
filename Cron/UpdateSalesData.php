@@ -29,8 +29,8 @@ class UpdateSalesData
     /**
      * Method executed when cron runs in server
      */
-    public function execute($dayShift=0) {
-        if($dayShift!=0) {
+    public function execute($dayShift) {
+        if(!is_int($dayShift)) {
             $dayShift = $this->getDateDiff();
         }
         $this->updateOrderData($dayShift);

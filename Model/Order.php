@@ -75,7 +75,7 @@ class Order
         foreach ($fixtures as $file) {
             $fileName = $this->fixtureManager->getFixture($file);
             if (!file_exists($fileName)) {
-                continue;
+                throw new Exception('File not found: '.$fileName);
             }
 
             $rows = $this->csvReader->getData($fileName);

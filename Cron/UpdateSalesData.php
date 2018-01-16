@@ -50,10 +50,10 @@ class UpdateSalesData
         $tableName = $connection->getTableName('sales_order_grid');
         $sql = "update " . $tableName . " set created_at =  DATE_ADD(created_at,INTERVAL ".$dateDiff." HOUR), updated_at =  DATE_ADD(updated_at,INTERVAL ".$dateDiff." HOUR)";
         $connection->query($sql);
-        $tableName = $connection->getTableName('sales_order_item');
-        $sql = "update " . $tableName . " set created_at =  DATE_ADD(created_at,INTERVAL ".$dateDiff." HOUR), updated_at =  DATE_ADD(updated_at,INTERVAL ".$dateDiff." HOUR)";
+        $orderItemTableName = $connection->getTableName('sales_order_item');
+        $orderTableName = $connection->getTableName('sales_order');
+        $sql = "update " . $orderTableName . " so, ".$orderItemTableName." oi set oi.created_at = so.created_at, oi.updated_at = so.updated_at where oi.order_id = so.entity_id";
         $connection->query($sql);
-
     }
 
     private function updateInvoiceData($dateDiff){

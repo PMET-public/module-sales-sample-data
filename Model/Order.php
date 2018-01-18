@@ -118,20 +118,27 @@ class Order
             $this->updateInvoiceData($orderId,$shiftHours);
             $this->updateShipmentData($orderId,$shiftHours);
         }
+        //add base currency code to all orders
+            $this->addBaseCurrencyCode();
 
     }
     private function updateOrderData($orderId,$dateDiff){
         //sales_order,sales_order_grid
         $connection = $this->resourceConnection->getConnection();
-        $tableName = $connection->getTableName('sales_order');
-        $sql = "update " . $tableName . " set created_at =  DATE_ADD(created_at,INTERVAL ".$dateDiff." HOUR), updated_at =  DATE_ADD(updated_at,INTERVAL ".$dateDiff." HOUR) where entity_id=".$orderId;
+        $orderTableName = $connection->getTableName('sales_order');
+        $sql = "update " . $orderTableName . " set created_at =  DATE_ADD(created_at,INTERVAL ".$dateDiff." HOUR), updated_at =  DATE_ADD(updated_at,INTERVAL ".$dateDiff." HOUR) where entity_id=".$orderId;
         $connection->query($sql);
         $tableName = $connection->getTableName('sales_order_grid');
         $sql = "update " . $tableName . " set created_at =  DATE_ADD(created_at,INTERVAL ".$dateDiff." HOUR), updated_at =  DATE_ADD(updated_at,INTERVAL ".$dateDiff." HOUR) where entity_id=".$orderId;
         $connection->query($sql);
-        $tableName = $connection->getTableName('sales_order_item');
-        $sql = "update " . $tableName . " set created_at =  DATE_ADD(created_at,INTERVAL ".$dateDiff." HOUR), updated_at =  DATE_ADD(updated_at,INTERVAL ".$dateDiff." HOUR) where order_id=".$orderId;
+        $orderItemTableName = $connection->getTableName('sales_order_item');
+        $sql = "update " . $orderTableName . " so, ".$orderItemTableName." oi set oi.created_at = so.created_at, oi.updated_at = so.updated_at where oi.order_id = ".$orderId." and oi.order_id = so.entity_id";
         $connection->query($sql);
+        // add base_currency_code for advanced Reporting
+        $sql = "update " . $orderTableName . " set base_currency_code =  'USD' where entity_id=".$orderId." and base_currency_code is NULL";
+        $connection->query($sql);
+
+
 
     }
 
@@ -155,5 +162,14 @@ class Order
         $sql = "update " . $tableName . " set created_at =  DATE_ADD(created_at,INTERVAL ".$dateDiff." HOUR), updated_at =  DATE_ADD(updated_at,INTERVAL ".$dateDiff." HOUR), order_created_at =  DATE_ADD(order_created_at,INTERVAL ".$dateDiff." HOUR) where order_id=".$orderId;
         $connection->query($sql);
 
+    }
+    private function addBaseCurrencyCode()
+    {
+        //sales_order,sales_order_grid
+        $connection = $this->resourceConnection->getConnection();
+        $orderTableName = $connection->getTableName('sales_order');
+        // add base_currency_code for advanced Reporting
+        $sql = "update " . $orderTableName . " set base_currency_code =  'USD' where base_currency_code is NULL";
+        $connection->query($sql);
     }
 }

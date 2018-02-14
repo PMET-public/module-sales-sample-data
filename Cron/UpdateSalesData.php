@@ -36,6 +36,7 @@ class UpdateSalesData
         $this->updateOrderData($dayShift);
         $this->updateInvoiceData($dayShift);
         $this->updateShipmentData($dayShift);
+        $this->updateCustomerData($dayShift);
         $this->refreshStatistics();
         $this->logger->debug('Ran Sales update data');
         return $this;
@@ -74,6 +75,18 @@ class UpdateSalesData
         $connection->query($sql);
         $tableName = $connection->getTableName('sales_shipment_grid');
         $sql = "update " . $tableName . " set created_at =  DATE_ADD(created_at,INTERVAL ".$dateDiff." HOUR), updated_at =  DATE_ADD(updated_at,INTERVAL ".$dateDiff." HOUR), order_created_at =  DATE_ADD(order_created_at,INTERVAL ".$dateDiff." HOUR)";
+        $connection->query($sql);
+
+    }
+
+    private function updateCustomerData($dateDiff){
+        //set user create dates
+        $connection = $this->resourceConnection->getConnection();
+        $customerTableName = $connection->getTableName('customer_entity');
+        $sql = "select DATEDIFF(now(), max(created_at)) * 24 + EXTRACT(HOUR FROM now()) - EXTRACT(HOUR FROM max(created_at)) -1 as hours from ".$customerTableName;
+        $result = $connection->fetchAll($sql);
+        $dateDiff =  $result[0]['hours']+$dateDiff;
+        $sql = "update ".$customerTableName." set created_at =  DATE_ADD(created_at,INTERVAL ".$dateDiff." HOUR), updated_at =  DATE_ADD(created_at,INTERVAL ".$dateDiff." HOUR)";
         $connection->query($sql);
 
     }

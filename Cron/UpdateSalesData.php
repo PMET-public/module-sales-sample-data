@@ -86,7 +86,7 @@ class UpdateSalesData
         $sql = "select DATEDIFF(now(), max(created_at)) * 24 + EXTRACT(HOUR FROM now()) - EXTRACT(HOUR FROM max(created_at)) -1 as hours from ".$customerTableName;
         $result = $connection->fetchAll($sql);
         $dateDiff =  $result[0]['hours']+$dateDiff;
-        $sql = "update ".$customerTableName." set created_at =  DATE_ADD(created_at,INTERVAL ".$dateDiff." HOUR), updated_at =  DATE_ADD(created_at,INTERVAL ".$dateDiff." HOUR)";
+        $sql = "update ".$customerTableName." set created_at =  DATE_ADD(created_at,INTERVAL ".$dateDiff." HOUR), updated_at =  DATE_ADD(created_at,INTERVAL ".$dateDiff." HOUR) where DATE_ADD(created_at,INTERVAL ".$dateDiff." HOUR) < now()";
         $connection->query($sql);
 
     }

@@ -37,6 +37,7 @@ class UpdateSalesData
         $this->updateInvoiceData($dayShift);
         $this->updateShipmentData($dayShift);
         $this->updateCustomerData($dayShift);
+        $this->updateWishlistData($dayShift);
         $this->refreshStatistics();
         $this->logger->debug('Ran Sales update data');
         return $this;
@@ -87,6 +88,17 @@ class UpdateSalesData
         $result = $connection->fetchAll($sql);
         $dateDiff =  $result[0]['hours']+$dateDiff;
         $sql = "update ".$customerTableName." set created_at =  DATE_ADD(created_at,INTERVAL ".$dateDiff." HOUR), updated_at =  DATE_ADD(created_at,INTERVAL ".$dateDiff." HOUR) where DATE_ADD(created_at,INTERVAL ".$dateDiff." HOUR) < now()";
+        $connection->query($sql);
+
+    }
+    private function updateWishlistData($dateDiff){
+        //set user create dates
+        $connection = $this->resourceConnection->getConnection();
+        $wishlistItemTableName = $connection->getTableName('wishlist_item');
+        $sql = "select DATEDIFF(now(), max(added_at)) * 24 + EXTRACT(HOUR FROM now()) - EXTRACT(HOUR FROM max(added_at)) -1 as hours from ".$wishlistItemTableName;
+        $result = $connection->fetchAll($sql);
+        $dateDiff =  $result[0]['hours']+$dateDiff;
+        $sql = "update ".$wishlistItemTableName." set added_at =  DATE_ADD(added_at,INTERVAL ".$dateDiff." HOUR) where DATE_ADD(added_at,INTERVAL ".$dateDiff." HOUR) < now()";
         $connection->query($sql);
 
     }

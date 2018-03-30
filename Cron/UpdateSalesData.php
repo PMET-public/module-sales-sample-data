@@ -37,7 +37,9 @@ class UpdateSalesData
         $this->updateInvoiceData($dayShift);
         $this->updateShipmentData($dayShift);
         $this->updateCustomerData($dayShift);
-        $this->updateWishlistData($dayShift);
+        $this->updateReturnsData();
+        //$this->updateWishlistData($dayShift);
+
         $this->refreshStatistics();
         $this->logger->debug('Ran Sales update data');
         return $this;
@@ -91,8 +93,29 @@ class UpdateSalesData
         $connection->query($sql);
 
     }
+
+    private function updateReturnsData(){
+        $connection = $this->resourceConnection->getConnection();
+        $statusHistoryTable = $connection->getTableName('magento_rma_status_history');
+        $rmaTable = $connection->getTableName('magento_rma');
+        $rmaGridTable = $connection->getTableName('magento_rma_grid');
+        $creditMemoTable = $connection->getTableName('sales_creditmemo');
+        $creditMemoGridTable = $connection->getTableName('sales_creditmemo_grid');
+        $salesOrderTable = $connection->getTableName('sales_order');
+
+        $sql = "update ".$creditMemoTable." cm, ".$salesOrderTable." so set cm.created_at = date_add(so.created_at, interval 1 hour), cm.updated_at = date_add(so.created_at, interval 1 hour) where cm.order_id = so.entity_id";
+        $connection->query($sql);
+        $sql = "update ".$creditMemoGridTable." cm, ".$salesOrderTable." so set cm.created_at = date_add(so.created_at, interval 1 hour),cm.updated_at = date_add(so.created_at, interval 1 hour),cm.order_created_at = so.created_at where cm.order_id = so.entity_id";
+        $connection->query($sql);
+        $sql = "update ".$rmaTable." rma, ".$salesOrderTable." so set rma.date_requested = date_add(so.created_at, interval 1 hour) where rma.order_id = so.entity_id";
+        $connection->query($sql);
+        $sql = "update ".$rmaGridTable." rma, ".$salesOrderTable." so set rma.date_requested = date_add(so.created_at, interval 1 hour) rma.order_date = so.created_at where rma.order_id = so.entity_id";
+        $connection->query($sql);
+        $sql = "update ".$statusHistoryTable." sh, ".$rmaTable." rma set sh.created_at = rma.date_requested where sh.rma_entity_id = rma.entity_id";
+        $connection->query($sql);
+
+    }
     private function updateWishlistData($dateDiff){
-        //set user create dates
         $connection = $this->resourceConnection->getConnection();
         $wishlistItemTableName = $connection->getTableName('wishlist_item');
         $sql = "select DATEDIFF(now(), max(added_at)) * 24 + EXTRACT(HOUR FROM now()) - EXTRACT(HOUR FROM max(added_at)) -1 as hours from ".$wishlistItemTableName;

@@ -109,7 +109,7 @@ class UpdateSalesData
         $connection->query($sql);
         $sql = "update ".$rmaTable." rma, ".$salesOrderTable." so set rma.date_requested = date_add(so.created_at, interval 1 hour) where rma.order_id = so.entity_id";
         $connection->query($sql);
-        $sql = "update ".$rmaGridTable." rma, ".$salesOrderTable." so set rma.date_requested = date_add(so.created_at, interval 1 hour) rma.order_date = so.created_at where rma.order_id = so.entity_id";
+        $sql = "update ".$rmaGridTable." rma, ".$salesOrderTable." so set rma.date_requested = date_add(so.created_at, interval 1 hour), rma.order_date = so.created_at where rma.order_id = so.entity_id";
         $connection->query($sql);
         $sql = "update ".$statusHistoryTable." sh, ".$rmaTable." rma set sh.created_at = rma.date_requested where sh.rma_entity_id = rma.entity_id";
         $connection->query($sql);

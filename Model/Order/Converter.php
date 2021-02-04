@@ -33,8 +33,15 @@ class Converter
         CustomerRepositoryInterface $customerAccount,
         \Magento\Catalog\Model\ProductFactory $productFactory,
         //\Magento\ConfigurableSampleData\Model\Product\ConverterFactory $productConverterFactory,
-        \Magento\Eav\Model\Config $eavConfig
+        \Magento\Eav\Model\Config $eavConfig,
+        \Magento\Framework\App\State $state
     ) {
+        try{
+            $state->setAreaCode('adminhtml');
+        }
+        catch(\Magento\Framework\Exception\LocalizedException $e){
+            // left empty
+        }
         $this->customerRepository = $customerAccount;
         $this->productFactory = $productFactory;
         //$this->productConverter = $productConverterFactory->create();

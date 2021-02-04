@@ -108,8 +108,15 @@ class Processor
         \Magento\Sales\Controller\Adminhtml\Order\CreditmemoLoaderFactory $creditmemoLoaderFactory,
         \Magento\Store\Model\StoreManagerInterface $storeManager,
         \Magento\Sales\Api\CreditmemoManagementInterface $creditmemoManagement,
-        \Magento\Quote\Model\Quote\Item\ToOrderItem $toOrderItem
+        \Magento\Quote\Model\Quote\Item\ToOrderItem $toOrderItem,
+        \Magento\Framework\App\State $state
     ) {
+        try{
+            $state->setAreaCode('adminhtml');
+        }
+        catch(\Magento\Framework\Exception\LocalizedException $e){
+            // left empty
+        }
         $this->coreRegistry = $coreRegistry;
         $this->rendererCompositeFactory = $rendererCompositeFactory;
         $this->createOrderFactory = $createOrderFactory;

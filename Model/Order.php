@@ -53,8 +53,15 @@ class Order
         \Magento\Customer\Api\CustomerRepositoryInterface $customerRepository,
         \Magento\Sales\Model\OrderFactory $orderFactory,
         \MagentoEse\SalesSampleData\Cron\UpdateSalesData $updateSalesData,
-        \Magento\Framework\App\ResourceConnection $resourceConnection
+        \Magento\Framework\App\ResourceConnection $resourceConnection,
+        \Magento\Framework\App\State $state
     ) {
+        try{
+            $state->setAreaCode('adminhtml');
+        }
+        catch(\Magento\Framework\Exception\LocalizedException $e){
+            // left empty
+        }
         $this->fixtureManager = $sampleDataContext->getFixtureManager();
         $this->csvReader = $sampleDataContext->getCsvReader();
         $this->converter = $converter;

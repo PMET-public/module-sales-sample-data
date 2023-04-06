@@ -5,7 +5,9 @@
  */
 namespace MagentoEse\SalesSampleData\Model;
 
+use Magento\Framework\App\ResourceConnection;
 use Magento\Framework\Setup\SampleData\Context as SampleDataContext;
+use MagentoEse\SalesSampleData\Cron\UpdateSalesData;
 
 /**
  * Class Order
@@ -42,7 +44,22 @@ class Order
      */
     protected $customerRepository;
 
+    /**
+     * 
+     * @var \Magento\Sales\Model\OrderFactory
+     */
+    protected $orderFactory;
+
+    /**
+     * 
+     * @var UpdateSalesData
+     */
     protected $updateSalesData;
+
+    /**
+     * 
+     * @var ResourceConnection
+     */
     protected $resourceConnection;
 
     public function __construct(
